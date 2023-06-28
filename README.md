@@ -32,50 +32,23 @@ The goal of this tool is to enable efficient tracking and analysis of social med
 # File structure:
 
 src: This is the main directory where the source code of the project resides.
+
 scrapers: Each social media platform has its own scraper module.
+
 integrations: Here is where we integrate with other systems, in this case, Google Sheets.
+
 utils: This includes utility modules, like the config.py for managing the configuration settings, and logger.py for logging.
+
 main.py: This is the main entry point of the application.
+
 tests: This directory contains all unit tests. It's mirrored after the src directory for organization.
+
 docs: This is where you can find all the documentation for the project, including design documents and usage instructions.
+
 .gitignore: This file tells git which files or directories to ignore in the project.
+
 README.md: This is the file you're reading now! A great place for project summary, setup steps, etc.
+
 requirements.txt: This file lists the Python dependencies needed to run this project.
+
 setup.py: This file is used for packaging the project, and can be run to install all necessary dependencies.
-
-/social-media-scraper
-    /src
-        /scrapers
-            /linkedin
-                linkedin_scraper.py
-            /reddit
-                reddit_scraper.py
-            /medium
-                medium_scraper.py
-            ...
-        /integrations
-            google_sheets.py
-        /utils
-            config.py
-            logger.py
-        main.py
-    /tests
-        /scrapers
-            test_linkedin_scraper.py
-            test_reddit_scraper.py
-            test_medium_scraper.py
-        test_google_sheets.py
-    /docs
-        /design
-            architecture.md
-        /usage
-            user_guide.md
-            troubleshooting.md
-        ...
-    .gitignore
-    README.md
-    requirements.txt
-    setup.py
-
-
-    
