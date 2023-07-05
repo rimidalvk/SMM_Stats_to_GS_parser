@@ -15,8 +15,21 @@ class LinkedinScraper:
     }
     DEFAULT_URL = ''
 
+    # https://www.linkedin.com/feed/update/urn:li:activity:
+
     def __int__(self):
         self.service = 'linkedin'
 
     def get_analytics_content(self, links: list = None):
+
+        # Algorithm #
+        # Open Link 
+        # Check the link is opened correctly
+        # There is Element with this selector 'div.social-details-social-activity' visible on the page
+
+        # Get Reactions using this Selector: 'li.social-details-social-counts__reactions'
+        # Get Comments using this Selecutr: 'li.social-details-social-counts__comments'
+        # Get Reposts using this Selecutr: 'ul.social-details-social-counts li:last-of-type '
+
+        # Return Data for Likes, Comments, Reposts
         return
