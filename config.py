@@ -2,6 +2,9 @@
 proxies = []
 
 # Config google_sheets
-link_table = 'https://docs.google.com/spreadsheets/d/11auEKOrpBB3FL4Hq3mT1t-BEs6VvnRm17NP0Tz7AsT8/edit'
+link_table = '11auEKOrpBB3FL4Hq3mT1t-BEs6VvnRm17NP0Tz7AsT8'
 
-service_account = 'smm-mertics-scraper@my-linux-pc-363011.iam.gserviceaccount.com'
+''' Credentials JSON file with the creeds to read Google Sheets
+    Can be moved to GitHub Environment Variables for security reasons
+'''
+service_account_credentials = 'credentials.json'
