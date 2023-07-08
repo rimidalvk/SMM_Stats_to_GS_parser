@@ -1,6 +1,6 @@
 import requests
 import gspread
-import config
+import utils.config as config
 from google.oauth2.service_account import Credentials
 
 

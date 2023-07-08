@@ -5,7 +5,7 @@ from scrapers import linkedin, reddit
 from connectors import google_sheets
 from utils.logger import Logger
 
-from config import link_table
+from utils.config import link_table
 
 
 # Start Parsing LinkedIn Posts

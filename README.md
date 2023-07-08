@@ -29,21 +29,31 @@ Next Cycle Announcement: The program indicates when the next cycle will be, prov
 
 The goal of this tool is to enable efficient tracking and analysis of social media marketing efforts, making the data accessible for both the Content Manager/Social Media Manager for post tracking and the Marketing Director for data analysis and insights.
 
+# Project Docs
+
+Diagram: https://drive.google.com/file/d/1ANAIvfplw9cU-YZsvCLMjmnW3MrdSeHc/view?usp=sharing
+
 # File structure:
 
 src: This is the main directory where the source code of the project resides.
 
+connectors: This includes module that completes all integration and data manipulation with Sraped Data and Google Sheets
+
+notification: This is the module that can configure how users of the app will get notification of it's operation
+
 scrapers: Each social media platform has its own scraper module.
 
-integrations: Here is where we integrate with other systems, in this case, Google Sheets.
+<!-- integrations: Here is where we integrate with other systems, in this case, Google Sheets. -->
 
 utils: This includes utility modules, like the config.py for managing the configuration settings, and logger.py for logging.
 
 main.py: This is the main entry point of the application.
 
-tests: This directory contains all unit tests. It's mirrored after the src directory for organization.
+constants.py: This file can be used for storing some constant values that are used through all Application.
 
-docs: This is where you can find all the documentation for the project, including design documents and usage instructions.
+<!-- tests: This directory contains all unit tests. It's mirrored after the src directory for organization. -->
+
+<!-- docs: This is where you can find all the documentation for the project, including design documents and usage instructions. -->
 
 .gitignore: This file tells git which files or directories to ignore in the project.
 
@@ -51,4 +61,35 @@ README.md: This is the file you're reading now! A great place for project summar
 
 requirements.txt: This file lists the Python dependencies needed to run this project.
 
-setup.py: This file is used for packaging the project, and can be run to install all necessary dependencies.
+<!-- setup.py: This file is used for packaging the project, and can be run to install all necessary dependencies. -->
+
+# Work with the project
+
+# Scrapper analitics of social networks
+- Parsing of posts' analitical data from the social networks such as LinkedIn and Reddit (can be extened in the future)
+
+## Technologies
+
+1. `requests`
+2. `playwright`
+3. `beautifulsoup4`
+
+## Run
+
+1. Install dependancies from the file `requirements.txt` with the command
+
+```angular2html
+pip install -r requirements.txt
+```
+
+2. Install playwright with the command
+
+```angular2html
+playwright install
+```
+
+3. Install file main.py with the command
+
+```angular2html
+python3 main.py
+```
