@@ -1,8 +1,8 @@
 import requests
 import gspread
+from gspread import utils
 import utils.config as config
 from google.oauth2.service_account import Credentials
-
 
 from utils.logger import Logger
 
@@ -12,12 +12,12 @@ class GoogleSheet:
         self.service = 'google_sheets'
 
     # Function the Authorizes and connects to Google Sheets
-    def connect_to_the_sheeet(link_table):
+    def connect_to_the_sheeet(self):
         # Path to the service account JSON file
-        service_account_file = config.link_table
+        service_account_file = config.service_account_credentials
 
         # ID of the Google Sheet
-        spreadsheet_id = link_table
+        spreadsheet_id = config.table_id
 
         # Create credentials using the service account file
         credentials = Credentials.from_service_account_file(
@@ -38,18 +38,35 @@ class GoogleSheet:
     def get_links_post(self, connect_to_the_sheeet):
 
         # Get the resulting lists of link for Main Action
-        result_links = self.filter_posts(
-            self.get_all_links_from_sheet, self.get_configuration_data)
-        return result_links
+        # result_links = self.filter_posts(self.get_all_links_from_sheet, self.get_configuration_data)
+        return ""
 
-    def get_all_links_from_sheet(connect_to_the_sheeet):
+    def get_all_links_from_sheet(self):
         # Fetch posts links from Google Sheets
 
-        all_links_data = []
-        # Output the the combination of Link and Time of Publication
-        return all_links_data
+        worksheet = self.connect_to_the_sheeet().worksheet("SMM Journal")
 
-    def filter_posts(links, config_data):
+        values_links_list = worksheet.col_values(
+            utils.column_letter_to_index("M"))
+        # values_dates_list = worksheet.col_values(utils.column_letter_to_index("Q"))
+
+        values_time_list = []
+
+        for link in values_links_list:
+            if values_links_list.index(link) >= 2:
+                value = worksheet.acell(
+                    'Q' + f'{values_links_list.index(link)}').value
+                values_time_list.append(value)
+
+        all_links = values_links_list[2:]
+        all_publication_times = values_time_list[2:]
+
+        combined_list = list(zip(all_links, all_publication_times))
+
+        # Output the the combination of Link and Time of Publication
+        return combined_list
+
+    def filter_posts(self, links, config_data):
         # Input Links_data and Config_data
 
         # # Detailed Algorithm # #
