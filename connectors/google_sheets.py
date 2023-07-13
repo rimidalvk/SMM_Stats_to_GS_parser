@@ -3,6 +3,7 @@ import gspread
 from gspread import utils
 import utils.config as config
 from google.oauth2.service_account import Credentials
+from datetime import datetime
 
 from utils.logger import Logger
 
@@ -46,28 +47,35 @@ class GoogleSheet:
 
         worksheet = self.connect_to_the_sheeet().worksheet("SMM Journal")
 
+        # Reading all column values for "M" and "Q" columns
         values_links_list = worksheet.col_values(
             utils.column_letter_to_index("M"))
-        # values_dates_list = worksheet.col_values(utils.column_letter_to_index("Q"))
+        values_dates_list = worksheet.col_values(
+            utils.column_letter_to_index("Q"))
 
-        values_time_list = []
+        '''
+            Iteration approach of getting data from GSheet - Doesn't work and Above the limit
 
-        for link in values_links_list:
-            if values_links_list.index(link) >= 2:
-                value = worksheet.acell(
-                    'Q' + f'{values_links_list.index(link)}').value
-                values_time_list.append(value)
+            values_time_list = []
+            for link in values_links_list:
+                if values_links_list.index(link) >= 2:
+                    value = worksheet.acell(
+                        'Q' + f'{values_links_list.index(link)}').value
+                    values_time_list.append(value)
+        '''
 
         all_links = values_links_list[2:]
-        all_publication_times = values_time_list[2:]
+        all_publication_times = values_dates_list[2:]
 
         combined_list = list(zip(all_links, all_publication_times))
 
         # Output the the combination of Link and Time of Publication
         return combined_list
 
-    def filter_posts(self, links, config_data):
+    def filter_posts(self):
         # Input Links_data and Config_data
+
+        links_data = self.get_all_links_from_sheet()
 
         # # Detailed Algorithm # #
         '''
@@ -93,22 +101,65 @@ class GoogleSheet:
 
         '''
 
+        config_data = self.get_configuration_data()
+
+        # FIRST LAYER: If (current date & time - date & time of post publication) <=  24 --> Add post fo Scraping
+        for item in links_data[:5]:
+            if item[0] != '':
+                from_time = 0
+                for time_period in config_data['Period']:
+                    # check if Time of Publication in Time Period
+                    print(from_time)
+                    print(int(time_period))
+                    print('-----------------------')
+                    if self.time_diff_to_hours(item[1]) in range(int(from_time), int(time_period)):
+                        print(f'Post is added for Sraping: {item}')
+                        print('----------------------------------')
+                        break
+                    from_time = time_period
+            else:
+                print('No link in this row!')
+
+        # SECOND LAYER: If the post has been choosen on the previuos step --> Check comments rule:
+        #  If (current date & time - date & time of post publication) <= 60 --> Scrape comments from the post
+
         # Data structure for Links Data
-        links_data = [{'link': 'https://www.linkedin.com/feed/update/urn:li:activity:...', 'link_type': 'linkedin', 'date': '05.07.2023'},
-                      {'link': 'https://www.reddit.com/r/therewasanattempt/comments/...', 'link_type': 'reddit', 'date': '04.07.2023'}]
-        links_data = [['https://www.linkedin.com/feed/update/urn:li:activity:', '05.07.2023'],
-                      ['https://www.reddit.com/r/therewasanattempt/comments/...', '04.07.2023']]
+        # links_data = [{'link': 'https://www.linkedin.com/feed/update/urn:li:activity:...', 'link_type': 'linkedin', 'date': '05.07.2023'},
+        #               {'link': 'https://www.reddit.com/r/therewasanattempt/comments/...', 'link_type': 'reddit', 'date': '04.07.2023'}]
+        # links_data = [['https://www.linkedin.com/feed/update/urn:li:activity:', '05.07.2023'],
+        #               ['https://www.reddit.com/r/therewasanattempt/comments/...', '04.07.2023']]
 
         # Output final Links Data for scraping
         final_links_result = []
         return final_links_result
 
-    def get_configuration_data(connect_to_the_sheeet):
+    def get_configuration_data(self):
         # Read Config Table in Google Sheets
 
-        # Output the Config Data
+        worksheet = self.connect_to_the_sheeet().worksheet(
+            "SMM stats parsing setup & log")
+
+        # Define the list of cell ranges to retrieve values from (e.g., ['A1:A15', 'B1:B15'])
+        ranges = ['A1:A15', 'B1:B15', 'C1:C15']
+
+        # Get the cell values within the ranges
+        cell_values = worksheet.batch_get(ranges)
+
+        # Declare config data List and Dict
         config_data = []
-        return config_data
+        config_data_dict = {}
+
+        # Reformat the data to list of lists
+        for list in cell_values:
+            unpacked_list = [item for sublist in list for item in sublist]
+            print(unpacked_list)
+            print('----------------------')
+            config_data.append(unpacked_list)
+
+        config_data_dict.update(
+            {"Period": config_data[0][1:], "LinkedIn posts": config_data[1][1:], 'LinkedIn comments': config_data[2][1:]})
+        # Output the Config Data
+        return config_data_dict
 
     def add_result_analytics(self, info, connect_to_the_sheeet):
         # Get Tab in the Google Sheet by name
@@ -154,3 +205,15 @@ class GoogleSheet:
             Could be the text file that contains all logs and saved in the repository or HTML report.
         '''
         print("Data has been added")
+
+    def time_diff_to_hours(self, datetime_string):
+        time_delta_result = datetime.now() - datetime.strptime(datetime_string,
+                                                               "%m/%d/%Y %H:%M:%S")
+
+        total_seconds = time_delta_result.total_seconds()
+        hours = int(total_seconds // 3600)
+        # minutes = int((total_seconds % 3600) // 60)
+        # seconds = int(total_seconds % 60)
+        # time_delta_str = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        print(hours)
+        return hours

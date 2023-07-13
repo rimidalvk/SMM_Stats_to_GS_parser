@@ -36,7 +36,11 @@ if __name__ == '__main__':
     Logger.get_log('Получаем ссылки с таблицы')
 
     # PRINT DATA
-    print(google_sheet.get_all_links_from_sheet())
+    # TESTING
+    # print(google_sheet.get_all_links_from_sheet())
+    # print(google_sheet.get_configuration_data())
+    google_sheet.filter_posts()
+    #
 
     # Get Links for Parsing
     links_post = google_sheet.get_links_post(table_id)
