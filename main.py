@@ -39,7 +39,8 @@ if __name__ == '__main__':
     # TESTING
     # print(google_sheet.get_all_links_from_sheet())
     # print(google_sheet.get_configuration_data())
-    google_sheet.filter_posts()
+    # google_sheet.filter_posts()
+    linkedin_posts.run_check()
     #
 
     # Get Links for Parsing

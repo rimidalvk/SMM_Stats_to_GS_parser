@@ -3,7 +3,7 @@ import gspread
 from gspread import utils
 import utils.config as config
 from google.oauth2.service_account import Credentials
-from datetime import datetime
+from datetime import datetime, time
 
 from utils.logger import Logger
 
@@ -103,23 +103,33 @@ class GoogleSheet:
 
         config_data = self.get_configuration_data()
 
+        final_links_result = []
+
         # FIRST LAYER: If (current date & time - date & time of post publication) <=  24 --> Add post fo Scraping
-        for item in links_data[:5]:
-            if item[0] != '':
-                from_time = 0
+        for item in links_data:
+            if item[0] != '' and item[1] != '':  # If link is present
+                from_time = 0  # Declare period time as 0 for first iteration
                 for time_period in config_data['Period']:
                     # check if Time of Publication in Time Period
-                    print(from_time)
-                    print(int(time_period))
-                    print('-----------------------')
+                    print('This is the time period:',
+                          from_time, int(time_period))
+
                     if self.time_diff_to_hours(item[1]) in range(int(from_time), int(time_period)):
-                        print(f'Post is added for Sraping: {item}')
-                        print('----------------------------------')
+                        parse_every_time = config_data['LinkedIn posts'][config_data['Period'].index(
+                            time_period)]
+                        print(
+                            f'Post is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
+                        if self.will_be_scraped(parse_every_time, item[1]):
+                            final_links_result.append(item[0])
+
+                        print('---------------------------------')
                         break
                     from_time = time_period
             else:
                 print('No link in this row!')
+            print("-----------------------")
 
+        print(final_links_result)
         # SECOND LAYER: If the post has been choosen on the previuos step --> Check comments rule:
         #  If (current date & time - date & time of post publication) <= 60 --> Scrape comments from the post
 
@@ -130,7 +140,6 @@ class GoogleSheet:
         #               ['https://www.reddit.com/r/therewasanattempt/comments/...', '04.07.2023']]
 
         # Output final Links Data for scraping
-        final_links_result = []
         return final_links_result
 
     def get_configuration_data(self):
@@ -215,5 +224,49 @@ class GoogleSheet:
         # minutes = int((total_seconds % 3600) // 60)
         # seconds = int(total_seconds % 60)
         # time_delta_str = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
-        print(hours)
+        # print('Hours passed after publication time:', hours)
         return hours
+
+    def will_be_scraped(self, time_period, publish_date):
+        time_period = int(time_period)
+
+        one_hour_check = datetime.now().minute in range(0, 10)
+        other_hours_check = datetime.now().hour % (time_period//60)
+        one_day_check = int(self.get_minutes_of_day()) in range(1380, 1440)
+
+        time_frame = int(self.get_minutes_after_publish(publish_date)) / 7200
+        decimal_part = round(time_frame % 1, 4)
+        five_days_check = 0.9917 <= decimal_part or decimal_part <= 0.0083
+
+        result = True
+
+        ''' Logic Description:
+            For 60 minutes --> every 60 minutes from the day start
+            For 120/180/240/480 minutes --> if the current hour is devided by time_period without remainder
+            For 1440 minutes --> when the current minute in the timeframe between 1400 - 1440 minutes (last hour of day)
+            For 7200 minutes --> The decimal part of the division minutes passed from the publication by time_period is +- 0.0083
+        '''
+        if time_period == 60 and one_hour_check:
+            print("For 60 minutes/1 hour")
+        elif time_period in [120, 180, 240, 480] and other_hours_check == 0:
+            print(f"For {time_period} minutes/{time_period//60} hours")
+        elif time_period == 1440 and one_day_check:
+            print("For 1440 minutes/1 day")
+        elif time_period == 7200 and five_days_check:
+            print("For 7200 minutes/5 days")
+        else:
+            result = False
+        return result
+
+    def get_minutes_of_day(self):
+        current_date = datetime.now().date()
+        start_of_day = datetime.combine(current_date, time.min)
+        time_passed = (datetime.now() - start_of_day).total_seconds() // 60
+        return time_passed
+
+    def get_minutes_after_publish(self, publish_date):
+        time_delta_result = datetime.now() - datetime.strptime(publish_date,
+                                                               "%m/%d/%Y %H:%M:%S")
+        total_seconds = time_delta_result.total_seconds()
+        minutes_passed = total_seconds // 60
+        return minutes_passed
