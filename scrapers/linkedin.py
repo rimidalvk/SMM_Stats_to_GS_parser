@@ -11,6 +11,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, WebDriverException, TimeoutException
+
 
 from utils.logger import Logger
 
@@ -19,113 +21,145 @@ class LinkedinScraper:
     DEFAULT_HEADERS = {
 
     }
-    DEFAULT_URL = ''
+    DEFAULT_URL = ''  # https://www.linkedin.com/feed/update/urn:li:activity:
+    BROWSER_EXE_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    DRIVER_EXE_PATH = "chromedriver-mac-arm64.zip"
+    PROFILE_DIR_NAME = "--profile-directory=Profile 2"
 
-    # https://www.linkedin.com/feed/update/urn:li:activity:
+    # For Mac /Users/max/Library/Application Support/Google/Chrome
+    # For Windows C:\Users\User3\AppData\Local\Google\Chrome\User Data
+    USER_DATA_DIR = r'--user-data-dir=C:\Users\User3\AppData\Local\Google\Chrome\User Data'
 
     def __int__(self):
         self.service = 'linkedin'
 
-    def login_linkedin_selenium(self):
-        # Need profile directory name
-        profile_dir_name = '--profile-directory=Profile 2'
-        user_data_dir = '--user-data-dir=/Users/max/Library/Application Support/Google/Chrome'
-        exe_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        # Need user data directory
+    def get_scraping_data(self, link):
+        # Need profile directory name and user data directory
+
         options = Options()
-        options.add_argument(profile_dir_name)
-        options.add_argument(user_data_dir)
-        driver = uc.Chrome(executable_path=exe_path, options=options)
-        driver.get("https://www.linkedin.com/")
+        # browser_executable_path=self.BROWSER_EXE_PATH
+        # use_subprocess=False
+        # driver_executable_path=self.DRIVER_EXE_PATH
+        # options.add_argument(self.PROFILE_DIR_NAME)
 
-        time.sleep(5)
-        driver.get(
-            "https://www.linkedin.com/feed/update/urn:li:activity:7084130557613252608/")
-        # https://www.linkedin.com/feed/update/urn:li:activity:7072270080629194752/
+        options.add_argument(self.USER_DATA_DIR)
+        options.add_argument("--headless")
 
-        # ul class="social-details-social-counts
-        # li class*=social-details-social-counts__reactions]
-        # li [class*=social-details-social-counts__comments]
-        # class="social-details-social-counts__item - reposts
+        driver = uc.Chrome(options=options)
+        # driver.get("https://www.linkedin.com/")
+
+        driver.get(link)
+        # "https://www.linkedin.com/feed/update/urn:li:activity:7084130557613252608/"
 
         # class="artdeco-modal__header - modal header
         # data-js-reaction-tab="ALL" - all reactions in  modal
         # data-js-reaction-tab="LIKE" - likes button in modal
         # data-js-reaction-tab="EMPATHY" - empathy button in modal
 
-        reactions_count_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, 'li[class*="social-details-social-counts__reactions"]')))
-        print(reactions_count_element)
+        '''
+            Check type of the post: Personal post or Comment for the post
+            profile_name = "Vladímir Kúbikov Smulski"
+            Depends on that try to locate desired elements
+
+            For post: 
+            post_element = 'div[class^="feed-shared-update"] div[class*="update-components-actor--with-control-menu"]'
+
+            For comment:
+            comment_element = 'article[class^="comments-comment-item"]'  + find text  {profile_name}
+        '''
+        profile_name = "Vladímir Kúbikov Smulski"
+
+        # Post selectors
+        post_header_element_selector = 'div[class^="feed-shared-update"] div[class*="update-components-actor--with-control-menu"]'
+        post_selectors = ['li[class*="social-details-social-counts__reactions"]',
+                          'li[class*="social-details-social-counts__comments"]', 'button[aria-label*="repost"]']
+
+        # Comment selectors #
+        comment_element_selector = 'article[class^="comments-comment-item"]'
+
+        comment_reactions_count_selector = 'div[class^="social-details-social-activity"] div[class^="comments-comment-item__social-actions"] div div:first-child button[class^="comments-comment-social-bar__reactions-count"]'
+        replies_count_selector = 'div[class^="social-details-social-activity"] div[class^="comments-comment-item__social-actions"] div div:last-child span[class="comments-comment-social-bar__replies-count"]'
+        comment_selectors = [
+            comment_reactions_count_selector, replies_count_selector]
+        # # #
+
+        # # Check whether Post or Comment should be parsed
+        # try:
+        #     post_header = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+        #         (By.CSS_SELECTOR, post_header_element_selector)))
+        # except (NoSuchElementException, Exception, WebDriverException, TimeoutException) as e:
+        #     print(f"Post header element was not found on the page!")
+        #     print(f"There is an error: {e}")
 
         try:
-            # Wait until the reactions, comments, and reposts elements are loaded.
-            reactions_count_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, 'li[class*="social-details-social-counts__reactions"]'))
-            )
+            # comments_group = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, comment_element_selector)))
+            comments_group = driver.find_elements(
+                By.CSS_SELECTOR, comment_element_selector)
 
-            comments_count_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, 'li[class*="social-details-social-counts__comments"]'))
-            )
+            # Use XPath to find the element with the specific text within the group of elements
+            element_xpath = f'//*[text()="{profile_name}"]'
+            comment_with_text = next((element for element in comments_group if element.find_elements(
+                By.XPATH, element_xpath)), None)
+        except (NoSuchElementException, Exception, WebDriverException, TimeoutException) as e:
+            print(f"Comment elements were not found on the page!")
+            print(f"There is an error: {e}")
 
-            reposts_count_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, 'li[class^="social-details-social-counts__item"]:last-child'))
-            )
+        # if profile_name in post_header.text:
+        #     print("POST IS ON THE PAGE!")
+        # elif comment_with_text:
+        #     print(comment_with_text.text)
 
-            # Get the counts of reactions, comments, and reposts.
-            reactions_count = int(reactions_count_element.text.split()[0])
-            comments_count = int(comments_count_element.text.split()[0])
-            reposts_count = int(reposts_count_element.text.split()[0])
+        results = []
+        if "?commentUrn" in link:
+            print("Comment should be scraped, Follow comment rules!")
+            for selector in comment_selectors:
+                print(f'Find element with selector {selector}')
+                try:
+                    # element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, selector)))
+                    element = comment_with_text.find_element(
+                        By.CSS_SELECTOR, selector)
 
-            # Output the results.
-            print(f"Reactions: {reactions_count}")
-            print(f"Comments: {comments_count}")
-            print(f"Reposts: {reposts_count}")
+                    if comment_selectors.index(selector) == 0:
+                        # reactions_count
+                        data = int(element.text)
+                        results.append(data)
+                    else:
+                        # replies_count
+                        data = int((element.text).split(" ")[0])
+                        results.append(data)
 
-        except Exception as e:
-            print(f"Error: {e}")
+                except (NoSuchElementException, Exception, WebDriverException, TimeoutException) as e:
+                    print(f"There is an error: {e}")
+                    # Save the error for logging
 
-        finally:
-            driver.quit()
+                    print(f"No data for the element {selector}!")
+                    results.append(0)
+        else:
+            print("Post should be scraped, Follow post rules!")
+            for selector in post_selectors:
+                print(f'Find element with selector {selector}')
+                try:
+                    # element = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.CSS_SELECTOR, selector)))
+                    element = driver.find_element(By.CSS_SELECTOR, selector)
 
-    def login_linkedin_playwright(self, email, password):
-        with sync_playwright() as p:
-            # args=["--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage"]
-            # args=['--profile-directory=Profile 2']
-            user_data_dir = '/Users/max/Library/Application Support/Google/Chrome'
-            exe_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-            browser_type = p.chromium
+                    if post_selectors.index(selector) == 0:
+                        # reactions_count
+                        data = int((element.text).replace(',', ''))
+                        results.append(data)
+                    else:
+                        # comments_count / reposts_count
+                        data = int((element.text).split(" ")[0])
+                        results.append(data)
 
-            browser = browser_type.launch_persistent_context(headless=False,
-                                                             executable_path=exe_path, user_data_dir=user_data_dir, args=['--profile-directory=Profile 2', "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage"])
+                except (NoSuchElementException, Exception, WebDriverException, TimeoutException) as e:
+                    print(f"There is an error: {e}")
+                    # Save the error for logging
 
-            # context = browser.new_context()
-            page = browser.new_page()
-            page.goto("https://www.linkedin.com/")
+                    print(f"No data for the element {selector}!")
+                    results.append(0)
 
-            # page.fill('input[name="session_key"]', email)
-            # page.fill('input[name="session_password"]', password)
-            # page.click('button[type="submit"]')
-
-            time.sleep(20)
-            # You can add some delay here or use wait functions to ensure the login is complete before proceeding further
-            # For example, you can use `page.wait_for_timeout(timeout)` to add some delay.
-
-            # Check if the login was successful
-            if "feed" in page.url:
-                print("Login successful.")
-                # Add your code to perform actions after successful login here.
-            else:
-                print("Login failed.")
-
-            # Don't forget to close the browser when done.
-            browser.close()
-
-    def run_check(self):
-        # self.login_linkedin_playwright(email, password)
-        self.login_linkedin_selenium()
+        driver.quit()
+        return results
 
     def get_analytics_content(self, links: list = None):
 
@@ -137,6 +171,22 @@ class LinkedinScraper:
         # Get Reactions using this Selector: 'li.social-details-social-counts__reactions'
         # Get Comments using this Selecutr: 'li.social-details-social-counts__comments'
         # Get Reposts using this Selecutr: 'ul.social-details-social-counts li:last-of-type '
-
         # Return Data for Likes, Comments, Reposts
-        return
+        final_results = []
+
+        ["Datetime", "Link", "Impressions/Views/Upvotes", "Likes",
+            "Number of Comments", "Number of shares/reposts"]
+        # linkedin_links = [x for x in links if "https://www.linkedin.com/" in x]
+        # print(linkedin_links)
+
+        for link in ["https://www.linkedin.com/feed/update/urn:li:activity:7086592897440980994/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7086592897440980994%2C7086706052330586114%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287086706052330586114%2Curn%3Ali%3Aactivity%3A7086592897440980994%29", "https://www.linkedin.com/posts/vladimirks_top-10-data-sync-integration-systems-activity-7075422145861816320-Saw0/", "https://www.linkedin.com/feed/update/urn:li:ugcPost:7080593974758887424/?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7080593974758887424%2C7081640219942297601%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287081640219942297601%2Curn%3Ali%3AugcPost%3A7080593974758887424%29",
+                     "https://www.linkedin.com/feed/update/urn:li:groupPost:37988-7090070935386435584/", "https://www.linkedin.com/feed/update/urn:li:share:7090706962111193088/", "https://www.linkedin.com/feed/update/urn:li:activity:7087174399446966273/", "https://www.linkedin.com/feed/update/urn:li:activity:7087171864300597248/", "https://www.linkedin.com/feed/update/urn:li:groupPost:99434-7089758320944717824/", "https://www.linkedin.com/feed/update/urn:li:activity:7089741686423089152/", "https://www.linkedin.com/feed/update/urn:li:groupPost:37988-7090070935386435584/", "https://www.linkedin.com/feed/update/urn:li:activity:7084420489074331648/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7084420489074331648%2C7084912047955546112%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287084912047955546112%2Curn%3Ali%3Aactivity%3A7084420489074331648%29", "https://www.linkedin.com/feed/update/urn:li:activity:7085217288982810624/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7085217288982810624%2C7085257880924282881%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287085257880924282881%2Curn%3Ali%3Aactivity%3A7085217288982810624%29"]:
+            print("THIS IS THE LINK FOR PARSING: ", link)
+            data = self.get_scraping_data(link)
+            test_list = [datetime.now().strftime(
+                "%m/%d/%Y %H:%M:%S"), link, "not used"]
+
+            test_list.extend(data)
+            final_results.append(test_list)
+
+        return final_results

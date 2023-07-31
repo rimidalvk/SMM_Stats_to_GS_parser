@@ -40,7 +40,8 @@ class GoogleSheet:
 
         # Get the resulting lists of link for Main Action
         # result_links = self.filter_posts(self.get_all_links_from_sheet, self.get_configuration_data)
-        return ""
+
+        return self.filter_posts()
 
     def get_all_links_from_sheet(self):
         # Fetch posts links from Google Sheets
@@ -170,11 +171,15 @@ class GoogleSheet:
         # Output the Config Data
         return config_data_dict
 
-    def add_result_analytics(self, info, connect_to_the_sheeet):
+    def add_result_analytics(self, data, connect_to_the_sheeet):
         # Get Tab in the Google Sheet by name
-        # Get the Content Info from parsing
+        worksheet = self.connect_to_the_sheeet().worksheet("Scraping results")
 
-        # Write the info into the Google Shet row
+        # Get the Content data from parsing
+        # data = [["Datetime", "Link", "Impressions/Views/Upvotes", "Likes", "Number of Comments", "Number of shares/reposts"]]
+        worksheet.update(f"A{self.get_last_row_index(worksheet)+1}", data)
+
+        # Write the data into the Google Shet row
         print("Data has been added")
 
     def log_srapper_run(self):
@@ -185,11 +190,15 @@ class GoogleSheet:
         # Errors Scraping Data
         # Errors for data manipulation
 
-        log_data = []
+        log_data = "No errors"
         print("Logs has been saved")
         return log_data
 
-    def add_srapper_run_result(self, connect_to_the_sheeet):
+    def add_srapper_run_result(self):
+
+        worksheet = self.connect_to_the_sheeet().worksheet(
+            "SMM stats parsing setup & log")
+
         # Get Tab in the Google Sheet by name
         ''' Save the following data:
             - Start Time of the Scrapper Cycle
@@ -201,18 +210,29 @@ class GoogleSheet:
             - Reddit Posts precessed
             - Reddit Comments in total ?
         '''
+        # Access the stored data
+        cycle_start = self.data_store.get("Cycle start", None)
+        cycle_end = self.data_store.get("Cycle end", None)
+        total_links_processed = "Number"
+        # self.data_store.get("Linkedin links", None) + self.data_store.get("Reddit links", None)
 
         # Errors that can be found during the script run
         errors = self.log_srapper_run()
-
         # Comments depeneding on the type of error
         comments = ''
+
+        linkedin_posts = self.data_store.get("Linkedin posts", None)
+        linkedin_comments = self.data_store.get("Linkedin comments", None)
+        reddit_posts = self.data_store.get("Reddit posts", None)
+        reddit_comments = self.data_store.get("Reddit comments", None)
 
         # Write the above logging info into the row
         '''
             Need to consider loging approach
             Could be the text file that contains all logs and saved in the repository or HTML report.
         '''
+        worksheet.update(f"A{self.get_last_row_index(worksheet)+1}", [
+                         [cycle_start, cycle_end, total_links_processed, errors, linkedin_posts, linkedin_comments, reddit_posts, reddit_comments]])
         print("Data has been added")
 
     def time_diff_to_hours(self, datetime_string):
@@ -270,3 +290,21 @@ class GoogleSheet:
         total_seconds = time_delta_result.total_seconds()
         minutes_passed = total_seconds // 60
         return minutes_passed
+
+    def get_last_row_index(self, worksheet):
+        all_values = worksheet.get_all_values()
+
+        # Find the last non-empty row
+        last_row_id = None
+        for i in range(len(all_values) - 1, -1, -1):
+            if any(cell.strip() != "" for cell in all_values[i]):
+                last_row_id = i + 1
+                break
+        return last_row_id
+
+    # Create an empty dictionary to store the data
+    data_store = {}
+
+    # Function to store data in the dictionary
+    def store_data(self, key, value):
+        self.data_store[key] = value
