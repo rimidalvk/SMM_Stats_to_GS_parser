@@ -5,9 +5,11 @@ from connectors import google_sheets
 from datetime import datetime
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-# from pyvirtualdisplay import Display
+# from pyvirtualdisplay import Displayxw
 
 import undetected_chromedriver as uc
+from selenium import webdriver
+
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -23,6 +25,7 @@ from utils.logger import Logger
 class RedditScraper:
     DEFAULT_HEADERS = {}
 
+    PROFILE_NAME = "Competitive_Speech36"
     DEFAULT_URL = ''  # https://www.reddit.com/r/StupidFood/comments/...
     BROWSER_EXE_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     DRIVER_EXE_PATH = ""
@@ -63,8 +66,6 @@ class RedditScraper:
 
         '''
 
-        profile_name = "Competitive_Speech36"
-
         # Post selectors
         posted_by_selector = 'div[data-test-id="post-content"] div[data-adclicklocation="top_bar"]'
         post_selectors = ['div[data-test-id="post-content"] div[id^="vote-arrows"]',
@@ -91,7 +92,7 @@ class RedditScraper:
                 By.CSS_SELECTOR, comment_selector)
 
             # Use XPath to find the element with the specific text within the group of elements
-            element_xpath = f'//*[text()="{profile_name}"]'
+            element_xpath = f'//*[text()="{self.PROFILE_NAME}"]'
             comment_with_text = next((element for element in comments_group if element.find_elements(
                 By.XPATH, element_xpath)), None)
         except (NoSuchElementException, Exception, WebDriverException, TimeoutException) as e:
@@ -100,8 +101,8 @@ class RedditScraper:
 
         results = []
         # "/comment/" in link - is not reliable option to use
-        if profile_name not in post_header.text:
-            print("Comment should be scraped, Follow comment rules!")
+        if self.PROFILE_NAME not in post_header.text:
+            print("This is the comment, so comment scraping rules are applied!")
             for selector in comment_selectors:
                 print(f'Find element with selector {selector}')
                 try:
@@ -117,11 +118,11 @@ class RedditScraper:
                 except (NoSuchElementException, Exception, WebDriverException, TimeoutException) as e:
                     print(f"There is an error: {e}")
                     # Save the error for logging
-
                     print(f"No data for the element {selector}!")
-                    results.append('no data')
-        elif profile_name in post_header.text:
-            print("Post should be scraped, Follow post rules!")
+                    results.append(0)
+
+        elif self.PROFILE_NAME in post_header.text:
+            print("This is the post, so post scraping rules are applied!")
             for selector in post_selectors:
                 print('check each element and use try and catch block')
                 try:
@@ -166,8 +167,9 @@ class RedditScraper:
             "Number of Comments", "Number of shares/reposts"]
         # reddit_links = [x for x in links if "https://www.reddit.com/" in x]
         # print(reddit_links)
+        # list for testing - ["https://www.reddit.com/r/dataengineering/comments/144en5h/data_architecture_best_practices_how_to_build_a/?context=3", "https://www.reddit.com/r/startup_resources/comments/14914tj/data_management_challenges_in_ma/?context=3", "https://www.reddit.com/r/datascience/comments/148gv5d/data_management_challenges_in_ma/?context=3", "https://www.reddit.com/r/dataengineering/comments/146yzed/how_cios_approach_automation/?context=3", "https://www.reddit.com/r/DigitalMarketing/comments/14mcrn6/struggling_with_posting_blog_posts_in_linkedin/", "https://www.reddit.com/r/Entrepreneur/comments/15b4ag0/7_lesson_i_learned_as_a_solopreneur/", "https://www.reddit.com/r/ChatGPT/comments/1470xlf/how_cios_approach_automation/?context=3", "https://www.reddit.com/r/Entrepreneur/comments/148hnh7/data_management_challenges_in_ma/?context=3", "https://www.reddit.com/r/learnmachinelearning/comments/14zqsio/the_next_generation_of_ai_platforms/", "https://www.reddit.com/r/Entrepreneur/comments/14yityj/comment/jrst5rz/?context=3", "https://www.reddit.com/r/dataengineering/comments/14xwkrp/comment/jrsspvs/?context=3", "https://www.reddit.com/r/exchangeserver/comments/14zrsb8/the_next_generation_of_ai_platforms/", "https://www.reddit.com/r/learnmachinelearning/comments/14zqsio/the_next_generation_of_ai_platforms/", "https://www.reddit.com/r/startup_resources/comments/14wmhlx/comment/jsbd5si/?context=3", "https://www.reddit.com/r/dataengineering/comments/1539422/data_management_challenges_in_ma/?sort=new", "https://www.reddit.com/r/ITManagers/comments/153a3bx/data_management_challenges_in_ma/", "https://www.reddit.com/r/productivity/comments/158c049/comment/jt993sp/?context=3"]
 
-        for link in ["https://www.reddit.com/r/dataengineering/comments/144en5h/data_architecture_best_practices_how_to_build_a/?context=3", "https://www.reddit.com/r/startup_resources/comments/14914tj/data_management_challenges_in_ma/?context=3", "https://www.reddit.com/r/datascience/comments/148gv5d/data_management_challenges_in_ma/?context=3", "https://www.reddit.com/r/dataengineering/comments/146yzed/how_cios_approach_automation/?context=3", "https://www.reddit.com/r/DigitalMarketing/comments/14mcrn6/struggling_with_posting_blog_posts_in_linkedin/", "https://www.reddit.com/r/Entrepreneur/comments/15b4ag0/7_lesson_i_learned_as_a_solopreneur/", "https://www.reddit.com/r/ChatGPT/comments/1470xlf/how_cios_approach_automation/?context=3", "https://www.reddit.com/r/Entrepreneur/comments/148hnh7/data_management_challenges_in_ma/?context=3", "https://www.reddit.com/r/learnmachinelearning/comments/14zqsio/the_next_generation_of_ai_platforms/", "https://www.reddit.com/r/Entrepreneur/comments/14yityj/comment/jrst5rz/?context=3", "https://www.reddit.com/r/dataengineering/comments/14xwkrp/comment/jrsspvs/?context=3"]:
+        for link in links:
             print("THIS IS THE LINK FOR PARSING: ", link)
             data = self.get_scraping_data(link)
             test_list = [datetime.now().strftime(

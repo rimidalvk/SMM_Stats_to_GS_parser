@@ -13,22 +13,22 @@ from utils.config import table_id
 def start_parse_linkedin(linkedin, google, linkedin_links):
     Logger.get_log('Собираем статистику по linkedin')
 
-    linkedin_links = [
+    # Filter links only if link contains base URL
+    linkedin_links_upd = [
         x for x in linkedin_links if "https://www.linkedin.com/" in x]
 
-    # Store data for loging
-    google_sheet.store_data("Linkedin links", len(linkedin_links))
+    # Store data for loging: LinkedIn Posts and Comments
+    google_sheet.store_data("Linkedin links", len(linkedin_links_upd))
     google_sheet.store_data("Linkedin posts", len(
-        [item for item in linkedin_links if "?commentUrn" not in item]))
+        [item for item in linkedin_links_upd if "?commentUrn" not in item]))
     google_sheet.store_data("Linkedin comments", len(
-        [item for item in linkedin_links if "?commentUrn" in item]))
+        [item for item in linkedin_links_upd if "?commentUrn" in item]))
 
-    content = linkedin.get_analytics_content(linkedin_links)
-    google.add_result_analytics(content, table_id)
+    content = linkedin.get_analytics_content(linkedin_links_upd)
+    google.add_result_analytics(content)  # table_id
+
 
 # Start Parsing Reddit Posts
-
-
 def start_parse_reddit(reddit, google, reddit_links):
     Logger.get_log('Собираем статистику по reddit')
 
@@ -36,14 +36,14 @@ def start_parse_reddit(reddit, google, reddit_links):
         x for x in reddit_links if "https://www.reddit.com/" in x]
 
     # Store data for loging
-    # google_sheet.store_data("Reddit links", len(reddit_links))
-    # google_sheet.store_data("Reddit posts", len(
-    #     [item for item in reddit_links if "/comment/" not in item]))
-    # google_sheet.store_data("Reddit comments", len(
-    #     [item for item in reddit_links if "/comment/" in item]))
+    google_sheet.store_data("Reddit links", len(reddit_links_upd))
+    google_sheet.store_data("Reddit posts", len(
+        [item for item in reddit_links_upd if "/comment/" not in item]))
+    google_sheet.store_data("Reddit comments", len(
+        [item for item in reddit_links_upd if "/comment/" in item]))
 
     content = reddit.get_analytics_content(reddit_links_upd)
-    google.add_result_analytics(content, table_id)
+    google.add_result_analytics(content)  # table_id
 
 
 if __name__ == '__main__':
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     #
 
     # Get Links for Parsing
-    links_post = google_sheet.get_links_post(table_id)
+    links_post = google_sheet.get_links_post()  # table_id
 
     # Run process in Threads for faster completetion for different Link types
     t1 = threading.Thread(target=start_parse_linkedin, args=(
@@ -80,16 +80,18 @@ if __name__ == '__main__':
         reddit_posts, google_sheet, links_post))
     # links_post['reddit_links']
 
-    # t1.start()
-    t2.start()
+    # Start threads
+    t1.start()
+    t1.join()
 
     # Finish threads
-    # t1.join()
+    t2.start()
     t2.join()
 
-    # End script run - get the log data
+    # End script run - save the log data
     google_sheet.store_data(
         "Cycle end", datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
 
-    # google_sheet.add_srapper_run_result()
+    # Save to Google Sheets all log data about script run
+    google_sheet.add_scraper_run_result()
     print("Scraping is finished")

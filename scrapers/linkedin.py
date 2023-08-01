@@ -7,6 +7,8 @@ from playwright.sync_api import sync_playwright
 # from pyvirtualdisplay import Display
 
 import undetected_chromedriver as uc
+from selenium import webdriver
+
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -18,12 +20,11 @@ from utils.logger import Logger
 
 
 class LinkedinScraper:
-    DEFAULT_HEADERS = {
-
-    }
-    DEFAULT_URL = ''  # https://www.linkedin.com/feed/update/urn:li:activity:
+    DEFAULT_HEADERS = {}
+    PROFILE_NAME = "Vladímir Kúbikov Smulski"
+    DEFAULT_URL = ""  # https://www.linkedin.com/feed/update/urn:li:activity:
     BROWSER_EXE_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    DRIVER_EXE_PATH = "chromedriver-mac-arm64.zip"
+    DRIVER_EXE_PATH = ""
     PROFILE_DIR_NAME = "--profile-directory=Profile 2"
 
     # For Mac /Users/max/Library/Application Support/Google/Chrome
@@ -67,7 +68,6 @@ class LinkedinScraper:
             For comment:
             comment_element = 'article[class^="comments-comment-item"]'  + find text  {profile_name}
         '''
-        profile_name = "Vladímir Kúbikov Smulski"
 
         # Post selectors
         post_header_element_selector = 'div[class^="feed-shared-update"] div[class*="update-components-actor--with-control-menu"]'
@@ -82,7 +82,6 @@ class LinkedinScraper:
         comment_selectors = [
             comment_reactions_count_selector, replies_count_selector]
         # # #
-
         # # Check whether Post or Comment should be parsed
         # try:
         #     post_header = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
@@ -97,7 +96,7 @@ class LinkedinScraper:
                 By.CSS_SELECTOR, comment_element_selector)
 
             # Use XPath to find the element with the specific text within the group of elements
-            element_xpath = f'//*[text()="{profile_name}"]'
+            element_xpath = f'//*[text()="{self.PROFILE_NAME}"]'
             comment_with_text = next((element for element in comments_group if element.find_elements(
                 By.XPATH, element_xpath)), None)
         except (NoSuchElementException, Exception, WebDriverException, TimeoutException) as e:
@@ -178,9 +177,9 @@ class LinkedinScraper:
             "Number of Comments", "Number of shares/reposts"]
         # linkedin_links = [x for x in links if "https://www.linkedin.com/" in x]
         # print(linkedin_links)
+        # list for testing - ["https://www.linkedin.com/feed/update/urn:li:activity:7086592897440980994/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7086592897440980994%2C7086706052330586114%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287086706052330586114%2Curn%3Ali%3Aactivity%3A7086592897440980994%29", "https://www.linkedin.com/posts/vladimirks_top-10-data-sync-integration-systems-activity-7075422145861816320-Saw0/", "https://www.linkedin.com/feed/update/urn:li:ugcPost:7080593974758887424/?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7080593974758887424%2C7081640219942297601%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287081640219942297601%2Curn%3Ali%3AugcPost%3A7080593974758887424%29", "https://www.linkedin.com/feed/update/urn:li:groupPost:37988-7090070935386435584/", "https://www.linkedin.com/feed/update/urn:li:share:7090706962111193088/", "https://www.linkedin.com/feed/update/urn:li:activity:7087174399446966273/", "https://www.linkedin.com/feed/update/urn:li:activity:7087171864300597248/", "https://www.linkedin.com/feed/update/urn:li:groupPost:99434-7089758320944717824/", "https://www.linkedin.com/feed/update/urn:li:activity:7089741686423089152/", "https://www.linkedin.com/feed/update/urn:li:groupPost:37988-7090070935386435584/", "https://www.linkedin.com/feed/update/urn:li:activity:7084420489074331648/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7084420489074331648%2C7084912047955546112%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287084912047955546112%2Curn%3Ali%3Aactivity%3A7084420489074331648%29", "https://www.linkedin.com/feed/update/urn:li:activity:7085217288982810624/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7085217288982810624%2C7085257880924282881%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287085257880924282881%2Curn%3Ali%3Aactivity%3A7085217288982810624%29", "https://www.linkedin.com/feed/update/urn:li:groupPost:2351870-7085150705132474369/?commentUrn=urn%3Ali%3Acomment%3A%28groupPost%3A2351870-7085150705132474369%2C7085261941279010816%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287085261941279010816%2Curn%3Ali%3AgroupPost%3A2351870-7085150705132474369%29", "https://www.linkedin.com/feed/update/urn:li:activity:7084940087871901697/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7084940087871901697%2C7085259837231501312%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287085259837231501312%2Curn%3Ali%3Aactivity%3A7084940087871901697%29", "https://www.linkedin.com/feed/update/urn:li:activity:7085217288982810624/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7085217288982810624%2C7085257880924282881%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287085257880924282881%2Curn%3Ali%3Aactivity%3A7085217288982810624%29", "https://www.linkedin.com/feed/update/urn:li:activity:7084420489074331648/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7084420489074331648%2C7084912047955546112%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287084912047955546112%2Curn%3Ali%3Aactivity%3A7084420489074331648%29", "https://www.linkedin.com/feed/update/urn:li:groupPost:3990648-7084620562202796032/?commentUrn=urn%3Ali%3Acomment%3A%28groupPost%3A3990648-7084620562202796032%2C7084916178036359168%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287084916178036359168%2Curn%3Ali%3AgroupPost%3A3990648-7084620562202796032%29", "https://www.linkedin.com/feed/update/urn:li:groupPost:3990648-7084428329281323008/?commentUrn=urn%3Ali%3Acomment%3A%28groupPost%3A3990648-7084428329281323008%2C7084916777708584960%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287084916777708584960%2Curn%3Ali%3AgroupPost%3A3990648-7084428329281323008%29", "https://www.linkedin.com/feed/update/urn:li:ugcPost:7079894316139053056/?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7079894316139053056%2C7084575472537190400%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287084575472537190400%2Curn%3Ali%3AugcPost%3A7079894316139053056%29"]
 
-        for link in ["https://www.linkedin.com/feed/update/urn:li:activity:7086592897440980994/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7086592897440980994%2C7086706052330586114%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287086706052330586114%2Curn%3Ali%3Aactivity%3A7086592897440980994%29", "https://www.linkedin.com/posts/vladimirks_top-10-data-sync-integration-systems-activity-7075422145861816320-Saw0/", "https://www.linkedin.com/feed/update/urn:li:ugcPost:7080593974758887424/?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7080593974758887424%2C7081640219942297601%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287081640219942297601%2Curn%3Ali%3AugcPost%3A7080593974758887424%29",
-                     "https://www.linkedin.com/feed/update/urn:li:groupPost:37988-7090070935386435584/", "https://www.linkedin.com/feed/update/urn:li:share:7090706962111193088/", "https://www.linkedin.com/feed/update/urn:li:activity:7087174399446966273/", "https://www.linkedin.com/feed/update/urn:li:activity:7087171864300597248/", "https://www.linkedin.com/feed/update/urn:li:groupPost:99434-7089758320944717824/", "https://www.linkedin.com/feed/update/urn:li:activity:7089741686423089152/", "https://www.linkedin.com/feed/update/urn:li:groupPost:37988-7090070935386435584/", "https://www.linkedin.com/feed/update/urn:li:activity:7084420489074331648/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7084420489074331648%2C7084912047955546112%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287084912047955546112%2Curn%3Ali%3Aactivity%3A7084420489074331648%29", "https://www.linkedin.com/feed/update/urn:li:activity:7085217288982810624/?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7085217288982810624%2C7085257880924282881%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287085257880924282881%2Curn%3Ali%3Aactivity%3A7085217288982810624%29"]:
+        for link in links:
             print("THIS IS THE LINK FOR PARSING: ", link)
             data = self.get_scraping_data(link)
             test_list = [datetime.now().strftime(

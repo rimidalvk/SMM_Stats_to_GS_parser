@@ -17,7 +17,7 @@ class GoogleSheet:
         # Path to the service account JSON file
         service_account_file = config.service_account_credentials
 
-        # ID of the Google Sheet
+        # Get ID of the Google Sheet
         spreadsheet_id = config.table_id
 
         # Create credentials using the service account file
@@ -29,20 +29,20 @@ class GoogleSheet:
         # Authenticate using the scoped credentials
         client = gspread.authorize(scoped_credentials)
 
-        # Open the Google Sheet
+        # Open the Google Sheet by ID
         spreadsheet = client.open_by_key(spreadsheet_id)
 
         # Output Google Sheet Object
         return spreadsheet
 
     # Main function that provides final links for parsing
-    def get_links_post(self, connect_to_the_sheeet):
+    def get_links_post(self):
 
-        # Get the resulting lists of link for Main Action
-        # result_links = self.filter_posts(self.get_all_links_from_sheet, self.get_configuration_data)
-
+        # Get the resulting lists of links for Main Action
         return self.filter_posts()
 
+    # Get all links from the sheet basing on collumns
+    # UPDATE: CAN BE PUT INTO THE SETTINGS text FIE LATER
     def get_all_links_from_sheet(self):
         # Fetch posts links from Google Sheets
 
@@ -54,17 +54,6 @@ class GoogleSheet:
         values_dates_list = worksheet.col_values(
             utils.column_letter_to_index("Q"))
 
-        '''
-            Iteration approach of getting data from GSheet - Doesn't work and Above the limit
-
-            values_time_list = []
-            for link in values_links_list:
-                if values_links_list.index(link) >= 2:
-                    value = worksheet.acell(
-                        'Q' + f'{values_links_list.index(link)}').value
-                    values_time_list.append(value)
-        '''
-
         all_links = values_links_list[2:]
         all_publication_times = values_dates_list[2:]
 
@@ -73,9 +62,11 @@ class GoogleSheet:
         # Output the the combination of Link and Time of Publication
         return combined_list
 
+    # Filter post based on the configuration data
     def filter_posts(self):
         # Input Links_data and Config_data
 
+        # Save all links from the sheet
         links_data = self.get_all_links_from_sheet()
 
         # # Detailed Algorithm # #
@@ -102,24 +93,34 @@ class GoogleSheet:
 
         '''
 
+        # Save configuration data
         config_data = self.get_configuration_data()
 
+        # Declare final links list for scraping
         final_links_result = []
 
         # FIRST LAYER: If (current date & time - date & time of post publication) <=  24 --> Add post fo Scraping
         for item in links_data:
-            if item[0] != '' and item[1] != '':  # If link is present
+            if item[0] != '' and item[1] != '':  # If link is present and data is specified
                 from_time = 0  # Declare period time as 0 for first iteration
                 for time_period in config_data['Period']:
                     # check if Time of Publication in Time Period
                     print('This is the time period:',
                           from_time, int(time_period))
-
+                    '''
+                        If the time difference in the range of Hours from A column
+                        0-24, 24-48 and so on
+                    '''
                     if self.time_diff_to_hours(item[1]) in range(int(from_time), int(time_period)):
+
+                        # If post:  if "?commentUrn" not in item[0] or "/comment/" not in item[0]: --> Parse tne Post
                         parse_every_time = config_data['LinkedIn posts'][config_data['Period'].index(
                             time_period)]
                         print(
                             f'Post is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
+                        # If Comment:  "?commentUrn" in item[0] or "/comment/" in item[0]: --> Parse tne Post
+                        # parse_every_time = config_data['LinkedIn comments'][config_data['Period'].index(time_period)]
+                        # print(f'Comment is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
                         if self.will_be_scraped(parse_every_time, item[1]):
                             final_links_result.append(item[0])
 
@@ -134,15 +135,10 @@ class GoogleSheet:
         # SECOND LAYER: If the post has been choosen on the previuos step --> Check comments rule:
         #  If (current date & time - date & time of post publication) <= 60 --> Scrape comments from the post
 
-        # Data structure for Links Data
-        # links_data = [{'link': 'https://www.linkedin.com/feed/update/urn:li:activity:...', 'link_type': 'linkedin', 'date': '05.07.2023'},
-        #               {'link': 'https://www.reddit.com/r/therewasanattempt/comments/...', 'link_type': 'reddit', 'date': '04.07.2023'}]
-        # links_data = [['https://www.linkedin.com/feed/update/urn:li:activity:', '05.07.2023'],
-        #               ['https://www.reddit.com/r/therewasanattempt/comments/...', '04.07.2023']]
-
         # Output final Links Data for scraping
         return final_links_result
 
+    # Get configuration data from the Google Sheet
     def get_configuration_data(self):
         # Read Config Table in Google Sheets
 
@@ -167,11 +163,12 @@ class GoogleSheet:
             config_data.append(unpacked_list)
 
         config_data_dict.update(
-            {"Period": config_data[0][1:], "LinkedIn posts": config_data[1][1:], 'LinkedIn comments': config_data[2][1:]})
+            {"Period": config_data[0][1:], "LinkedIn posts": config_data[1][1:], "LinkedIn comments": config_data[2][1:]})
         # Output the Config Data
         return config_data_dict
 
-    def add_result_analytics(self, data, connect_to_the_sheeet):
+    # Save sraped data into Google Sheet
+    def add_result_analytics(self, data):
         # Get Tab in the Google Sheet by name
         worksheet = self.connect_to_the_sheeet().worksheet("Scraping results")
 
@@ -182,6 +179,8 @@ class GoogleSheet:
         # Write the data into the Google Shet row
         print("Data has been added")
 
+    # Log the worlflow of the script to txt file
+    # SHOULD BE UPDATED
     def log_srapper_run(self):
         # Saving errors for each process (functions) that can meet some problems
 
@@ -194,7 +193,8 @@ class GoogleSheet:
         print("Logs has been saved")
         return log_data
 
-    def add_srapper_run_result(self):
+    # Save scraper run result to Google Sheets
+    def add_scraper_run_result(self):
 
         worksheet = self.connect_to_the_sheeet().worksheet(
             "SMM stats parsing setup & log")
@@ -213,8 +213,8 @@ class GoogleSheet:
         # Access the stored data
         cycle_start = self.data_store.get("Cycle start", None)
         cycle_end = self.data_store.get("Cycle end", None)
-        total_links_processed = "Number"
-        # self.data_store.get("Linkedin links", None) + self.data_store.get("Reddit links", None)
+        total_links_processed = self.data_store.get(
+            "Linkedin links", None) + self.data_store.get("Reddit links", None)
 
         # Errors that can be found during the script run
         errors = self.log_srapper_run()
@@ -235,6 +235,7 @@ class GoogleSheet:
                          [cycle_start, cycle_end, total_links_processed, errors, linkedin_posts, linkedin_comments, reddit_posts, reddit_comments]])
         print("Data has been added")
 
+    # Convert time difference between post publication and current time to hours
     def time_diff_to_hours(self, datetime_string):
         time_delta_result = datetime.now() - datetime.strptime(datetime_string,
                                                                "%m/%d/%Y %H:%M:%S")
@@ -247,9 +248,11 @@ class GoogleSheet:
         # print('Hours passed after publication time:', hours)
         return hours
 
+    # Funcation that decides if post should be scraped
     def will_be_scraped(self, time_period, publish_date):
         time_period = int(time_period)
 
+        # Main checks whether Post will be scraped
         one_hour_check = datetime.now().minute in range(0, 10)
         other_hours_check = datetime.now().hour % (time_period//60)
         one_day_check = int(self.get_minutes_of_day()) in range(1380, 1440)
@@ -278,12 +281,14 @@ class GoogleSheet:
             result = False
         return result
 
+    # Get minutes of the current day
     def get_minutes_of_day(self):
         current_date = datetime.now().date()
         start_of_day = datetime.combine(current_date, time.min)
         time_passed = (datetime.now() - start_of_day).total_seconds() // 60
         return time_passed
 
+    # Get minutes data after post publication
     def get_minutes_after_publish(self, publish_date):
         time_delta_result = datetime.now() - datetime.strptime(publish_date,
                                                                "%m/%d/%Y %H:%M:%S")
@@ -291,6 +296,7 @@ class GoogleSheet:
         minutes_passed = total_seconds // 60
         return minutes_passed
 
+    # Get Last row index with data
     def get_last_row_index(self, worksheet):
         all_values = worksheet.get_all_values()
 
@@ -302,7 +308,7 @@ class GoogleSheet:
                 break
         return last_row_id
 
-    # Create an empty dictionary to store the data
+    # Create an empty dictionary to store the data for scraper logging
     data_store = {}
 
     # Function to store data in the dictionary
