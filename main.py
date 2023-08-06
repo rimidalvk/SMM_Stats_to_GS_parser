@@ -60,12 +60,11 @@ if __name__ == '__main__':
 
     Logger.get_log('Получаем ссылки с таблицы')
 
-    # PRINT DATA
     # TESTING
     # print(google_sheet.get_all_links_from_sheet())
     # print(google_sheet.get_configuration_data())
     # google_sheet.filter_posts()
-    # linkedin_posts.get_scraping_data("https://www.linkedin.com/feed/update/urn:li:ugcPost:7080593974758887424/?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7080593974758887424%2C7081640219942297601%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287081640219942297601%2Curn%3Ali%3AugcPost%3A7080593974758887424%29")
+    # linkedin_posts.get_scraping_data()
     # reddit_posts.get_scraping_data()
     #
 
