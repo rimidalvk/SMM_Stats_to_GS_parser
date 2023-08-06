@@ -1,4 +1,3 @@
-import requests
 import gspread
 from gspread import utils
 import utils.config as config

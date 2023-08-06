@@ -2,11 +2,8 @@ import time
 import json
 
 from datetime import datetime
-# from playwright.sync_api import sync_playwright
-# from pyvirtualdisplay import Display
 
 import undetected_chromedriver as uc
-# from selenium import webdriver
 
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
