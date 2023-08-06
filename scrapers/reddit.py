@@ -1,3 +1,4 @@
+import time
 import json
 
 from datetime import datetime
@@ -45,7 +46,9 @@ class RedditScraper:
         options.add_argument("--headless")
 
         driver = uc.Chrome(options=options)
-        # driver.get("https://www.reddit.com/")
+        driver.get("https://www.reddit.com/")
+
+        time.sleep(5)
 
         # Scroll and wait Random number of seconds
 

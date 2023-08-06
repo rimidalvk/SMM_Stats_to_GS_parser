@@ -44,7 +44,9 @@ class LinkedinScraper:
         options.add_argument("--headless")
 
         driver = uc.Chrome(options=options)
-        # driver.get("https://www.linkedin.com/")
+        driver.get("https://www.linkedin.com/")
+
+        time.sleep(5)
 
         # Scroll and wait Random number of seconds
 
