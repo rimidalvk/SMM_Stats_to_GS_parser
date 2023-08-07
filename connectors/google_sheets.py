@@ -1,4 +1,3 @@
-import requests
 import gspread
 from gspread import utils
 import utils.config as config
@@ -101,7 +100,7 @@ class GoogleSheet:
 
         # FIRST LAYER: If (current date & time - date & time of post publication) <=  24 --> Add post fo Scraping
         for item in links_data:
-            if item[0] != '' and item[1] != '':  # If link is present and data is specified
+            if item[0] != '' and item[1] != '':  # If link is present and date is specified
                 from_time = 0  # Declare period time as 0 for first iteration
                 for time_period in config_data['Period']:
                     # check if Time of Publication in Time Period
@@ -113,15 +112,39 @@ class GoogleSheet:
                     '''
                     if self.time_diff_to_hours(item[1]) in range(int(from_time), int(time_period)):
 
+                        # If Comment:  "?commentUrn" in item[0] or "/comment/" in item[0]: --> Parse tne Comment
+                        if "https://www.linkedin.com/" in item[0] and "?commentUrn" in item[0]:
+                            parse_every_time = config_data['LinkedIn comments'][config_data['Period'].index(
+                                time_period)]
+                            print(
+                                f'LinkedIn Comment is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
+
+                        elif "https://www.reddit.com/" in item[0] and "/comment/" in item[0]:
+                            parse_every_time = config_data['Reddit comments'][config_data['Period'].index(
+                                time_period)]
+                            print(
+                                f'Reddit comment is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
+
                         # If post:  if "?commentUrn" not in item[0] or "/comment/" not in item[0]: --> Parse tne Post
-                        parse_every_time = config_data['LinkedIn posts'][config_data['Period'].index(
-                            time_period)]
-                        print(
-                            f'Post is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
-                        # If Comment:  "?commentUrn" in item[0] or "/comment/" in item[0]: --> Parse tne Post
-                        # parse_every_time = config_data['LinkedIn comments'][config_data['Period'].index(time_period)]
-                        # print(f'Comment is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
+                        elif "https://www.linkedin.com/" in item[0] and "?commentUrn" not in item[0]:
+                            parse_every_time = config_data['LinkedIn posts'][config_data['Period'].index(
+                                time_period)]
+                            print(
+                                f'LinkedIn post is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
+
+                        elif "https://www.reddit.com/" in item[0] and "/comment/" not in item[0]:
+                            parse_every_time = config_data['Reddit posts'][config_data['Period'].index(
+                                time_period)]
+                            print(
+                                f'Reddit post is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
+
+                        else:
+                            print(
+                                f"Check the link {item[0]} Based on the rules it can not ge parsed!")
+
                         if self.will_be_scraped(parse_every_time, item[1]):
+                            print(f'Post will be Sсraped: {item[0]}')
+
                             final_links_result.append(item[0])
 
                         print('---------------------------------')
@@ -132,8 +155,6 @@ class GoogleSheet:
             print("-----------------------")
 
         print(final_links_result)
-        # SECOND LAYER: If the post has been choosen on the previuos step --> Check comments rule:
-        #  If (current date & time - date & time of post publication) <= 60 --> Scrape comments from the post
 
         # Output final Links Data for scraping
         return final_links_result
@@ -146,7 +167,7 @@ class GoogleSheet:
             "SMM stats parsing setup & log")
 
         # Define the list of cell ranges to retrieve values from (e.g., ['A1:A15', 'B1:B15'])
-        ranges = ['A1:A15', 'B1:B15', 'C1:C15']
+        ranges = ['A1:A15', 'B1:B15', 'C1:C15', 'D1:D15', 'E1:E15']
 
         # Get the cell values within the ranges
         cell_values = worksheet.batch_get(ranges)
@@ -162,8 +183,8 @@ class GoogleSheet:
             print('----------------------')
             config_data.append(unpacked_list)
 
-        config_data_dict.update(
-            {"Period": config_data[0][1:], "LinkedIn posts": config_data[1][1:], "LinkedIn comments": config_data[2][1:]})
+        config_data_dict.update({"Period": config_data[0][1:], "LinkedIn posts": config_data[1][1:],
+                                "LinkedIn comments": config_data[2][1:], "Reddit posts": config_data[3][1:], "Reddit comments": config_data[4][1:]})
         # Output the Config Data
         return config_data_dict
 
@@ -174,7 +195,64 @@ class GoogleSheet:
 
         # Get the Content data from parsing
         # data = [["Datetime", "Link", "Impressions/Views/Upvotes", "Likes", "Number of Comments", "Number of shares/reposts"]]
-        worksheet.update(f"A{self.get_last_row_index(worksheet)+1}", data)
+
+        # # Get the header row of the Google Sheet
+        # header_row = worksheet.row_values(2)
+
+        # # Get the column indices for each column header using the mapping
+        # col_indices = [header_row.index(
+        #     col_header) + 1 for col_header in column_mapping.keys()]
+
+        # # Write data to rows based on column headers using the mapping and column indices
+        # for data_dict in data:
+        #     for col_header, col_key in column_mapping.items():
+        #         if col_header in header_row:
+        #             col_index = col_indices[list(
+        #                 column_mapping.keys()).index(col_header)]
+        #             # Assuming header is in row 1, so data starts from row 2
+        #             row_index = data.index(data_dict) + \
+        #                 self.get_last_row_index(worksheet)+1
+        #             value = data_dict.get(col_key, "")
+        #             worksheet.update_cell(row_index, col_index, str(value))
+
+        # Create a mapping between column headers and dictionary keys
+        column_mapping = {
+            "Date&Time": "datetime",
+            "Link": "link",
+            "Impressions/Views": "impressions",
+            "Upvote Rate": "upvote_rate",
+            "Reactions/Likes": "reactions",
+            "Comments": "comments",
+            "Shares/Reposts": "reposts",
+            "JSON": "json"
+        }
+
+        # Get the header row of the Google Sheet
+        header_row = worksheet.row_values(2)
+
+        # Prepare the data to update in the Google Sheet
+        data_to_update = []
+        for data_dict in data:
+            row_data = []
+            for col_header in column_mapping.keys():
+                if col_header in header_row:
+                    col_key = column_mapping[col_header]
+                    value = data_dict.get(col_key, "")
+                    row_data.append(str(value))
+            data_to_update.append(row_data)
+
+        # Update the range of cells in one API call
+        # Assuming header is in row 2, so data starts from row 3
+        # start_row = self.get_last_row_index(worksheet)+1
+        # start_col = 1  # Start from the first column
+        # end_row = start_row + len(data_to_update) - 1
+        # end_col = start_col + len(data_to_update[0]) - 1
+        # # e.g., A2:E3
+        # range_to_update = f'A{start_row}:{chr(ord("A") + end_col)}{end_row}'
+        # worksheet.update(range_to_update, data_to_update)
+
+        worksheet.update(
+            f"A{self.get_last_row_index(worksheet)+1}", data_to_update)
 
         # Write the data into the Google Shet row
         print("Data has been added")
