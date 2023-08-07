@@ -1,5 +1,6 @@
 import time
 import json
+import random
 
 from datetime import datetime
 # from pyvirtualdisplay import Displayxw
@@ -48,7 +49,7 @@ class RedditScraper:
         driver = uc.Chrome(options=options)
         driver.get("https://www.reddit.com/")
 
-        time.sleep(5)
+        time.sleep(random.uniform(10, 20))
 
         # Scroll and wait Random number of seconds
 

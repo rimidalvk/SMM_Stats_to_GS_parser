@@ -139,7 +139,8 @@ class GoogleSheet:
                                 f'Reddit post is added for Sсraping: {item} for this time period {from_time, int(time_period)} every {parse_every_time} minutes')
 
                         else:
-                            print(f"Chcek the link {item[0]}!")
+                            print(
+                                f"Check the link {item[0]} Based on the rules it can not ge parsed!")
 
                         if self.will_be_scraped(parse_every_time, item[1]):
                             print(f'Post will be Sсraped: {item[0]}')
@@ -182,8 +183,8 @@ class GoogleSheet:
             print('----------------------')
             config_data.append(unpacked_list)
 
-        config_data_dict.update(
-            {"Period": config_data[0][1:], "LinkedIn posts": config_data[1][1:], "LinkedIn comments": config_data[2][1:], "Reddit posts": config_data[3][1:], "Reddit comments": config_data[4][1:]})
+        config_data_dict.update({"Period": config_data[0][1:], "LinkedIn posts": config_data[1][1:],
+                                "LinkedIn comments": config_data[2][1:], "Reddit posts": config_data[3][1:], "Reddit comments": config_data[4][1:]})
         # Output the Config Data
         return config_data_dict
 
@@ -242,15 +243,16 @@ class GoogleSheet:
 
         # Update the range of cells in one API call
         # Assuming header is in row 2, so data starts from row 3
-        start_row = self.get_last_row_index(worksheet)+1
-        start_col = 1  # Start from the first column
-        end_row = start_row + len(data_to_update) - 1
-        end_col = start_col + len(data_to_update[0]) - 1
-        # e.g., A2:E3
-        range_to_update = f'A{start_row}:{chr(ord("A") + end_col)}{end_row}'
-        worksheet.update(range_to_update, data_to_update)
+        # start_row = self.get_last_row_index(worksheet)+1
+        # start_col = 1  # Start from the first column
+        # end_row = start_row + len(data_to_update) - 1
+        # end_col = start_col + len(data_to_update[0]) - 1
+        # # e.g., A2:E3
+        # range_to_update = f'A{start_row}:{chr(ord("A") + end_col)}{end_row}'
+        # worksheet.update(range_to_update, data_to_update)
 
-        # worksheet.update(f"A{self.get_last_row_index(worksheet)+1}", data)
+        worksheet.update(
+            f"A{self.get_last_row_index(worksheet)+1}", data_to_update)
 
         # Write the data into the Google Shet row
         print("Data has been added")

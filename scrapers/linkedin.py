@@ -1,5 +1,6 @@
 import time
 import json
+import random
 
 from datetime import datetime
 
@@ -46,7 +47,7 @@ class LinkedinScraper:
         driver = uc.Chrome(options=options)
         driver.get("https://www.linkedin.com/")
 
-        time.sleep(5)
+        time.sleep(random.uniform(10, 20))
 
         # Scroll and wait Random number of seconds
 
